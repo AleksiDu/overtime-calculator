@@ -29,14 +29,17 @@ const app = new Elysia()
   .post(
     "/overtimes",
     ({ params }) => {
-      if (Number(params.hour) === 0) {
-        throw new Error("Content cannot be empty");
+      const rate = parseFloat(params.rate);
+      const hour = parseFloat(params.hour);
+
+      if (params.rate === undefined || params.hour === undefined) {
+        throw new Error("Rate and hour parameters are required.");
       }
-      console.log("params", params);
+      console.log(params);
 
       const calculateOvertimePay = (
-        rate: string,
-        hoursWorked: string
+        rate: number,
+        hoursWorked: number
       ): number => {
         const regularHoursPerDay = 8; // Assuming 8 hours is a regular workday
         const overtimeMultiplier = 1.5; // Overtime rate is 1.5 times the regular rate
@@ -45,16 +48,16 @@ const app = new Elysia()
         let overtimePay = 0;
         let overtimeHours = 0;
 
-        if (Number(hoursWorked) > regularHoursPerDay) {
+        if (hoursWorked > regularHoursPerDay) {
           // Calculate regular pay for the first 8 hours
-          regularPay = Number(rate) * regularHoursPerDay;
+          regularPay = rate * regularHoursPerDay;
 
           // Calculate overtime pay for hours worked beyond 8 hours
-          overtimeHours = Number(hoursWorked) - regularHoursPerDay;
-          overtimePay = Number(rate) * overtimeHours * overtimeMultiplier;
+          overtimeHours = hoursWorked - regularHoursPerDay;
+          overtimePay = rate * overtimeHours * overtimeMultiplier;
         } else {
           // No overtime, all hours are regular
-          regularPay = Number(rate) * Number(hoursWorked);
+          regularPay = rate * hoursWorked;
         }
 
         return overtimePay;
@@ -62,10 +65,10 @@ const app = new Elysia()
 
       const newOvertime = {
         id: Math.random(),
-        rate: params.rate,
-        hour: params.hour,
+        rate: rate,
+        hour: hour,
         date: new Date(),
-        overtimePay: calculateOvertimePay(params.rate, params.hour),
+        overtimePay: calculateOvertimePay(rate, hour),
       };
       db.push(newOvertime);
       return <OvertimeItem {...newOvertime} />;
@@ -99,15 +102,15 @@ const BaseHtml = ({ children }: elements.Children) => `
 
 type Overtime = {
   id: number;
-  rate: string;
-  hour: string;
+  rate: number;
+  hour: number;
   date: Date;
   overtimePay?: number;
 };
 
 const db: Overtime[] = [
-  { id: 1, rate: "16", hour: "3", overtimePay: 10, date: new Date() },
-  { id: 2, rate: "16", hour: "3", overtimePay: 9, date: new Date() },
+  { id: 1, rate: 16, hour: 3, overtimePay: 10, date: new Date() },
+  { id: 2, rate: 16, hour: 3, overtimePay: 9, date: new Date() },
 ];
 
 const OvertimeItem = ({ rate, hour, date, overtimePay }: Overtime) => {
@@ -160,11 +163,7 @@ const OvertimeList = ({ overtimes }: { overtimes: Overtime[] }) => {
 
 const OvertimeForm = () => {
   return (
-    <form
-      hx-post="/overtimes"
-      hx-swap="beforebegin"
-      _="on submit target.reset()"
-    >
+    <form hx-post="/overtimes" hx-swap="beforebegin">
       <div class="relative mb-3" data-te-input-wrapper-init>
         <input
           type="number"
