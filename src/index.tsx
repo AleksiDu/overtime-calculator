@@ -1,6 +1,8 @@
 import { Elysia, t } from "elysia";
 import { html } from "@elysiajs/html";
 import * as elements from "typed-html";
+import { db } from "./db";
+import { Overtime, overtimes } from "./db/schema";
 
 const app = new Elysia()
   .use(html())
@@ -12,23 +14,18 @@ const app = new Elysia()
           hx-get="/overtimes"
           hx-trigger="load"
           hx-swap="innerHTML"
-        >
-          <button
-            class="rounded-none border-4 bg-sky-500/50 hover:bg-sky-500/100"
-            hx-post="/clicked"
-            hx-swap="outerHTML"
-          >
-            Click me
-          </button>
-        </body>
+        ></body>
       </BaseHtml>
     )
   )
-  .post("/clicked", () => <div class="text-blue-600">I'm from the server!</div>)
-  .get("/overtimes", () => <OvertimeList overtimes={db} />)
+
+  .get("/overtimes", async () => {
+    const data = await db.select().from(overtimes).all();
+    return <OvertimeList overtimes={data} />;
+  })
   .post(
     "/overtimes",
-    ({ body }) => {
+    async ({ body }) => {
       const rate = parseFloat(body.rate);
       const hour = parseFloat(body.hour);
 
@@ -40,36 +37,24 @@ const app = new Elysia()
         rate: number,
         hoursWorked: number
       ): number => {
-        const regularHoursPerDay = 8; // Assuming 8 hours is a regular workday
-        const overtimeMultiplier = 1.5; // Overtime rate is 1.5 times the regular rate
-
-        let regularPay = 0;
-        let overtimePay = 0;
-        let overtimeHours = 0;
-
-        if (hoursWorked > regularHoursPerDay) {
-          // Calculate regular pay for the first 8 hours
-          regularPay = rate * regularHoursPerDay;
-
-          // Calculate overtime pay for hours worked beyond 8 hours
-          overtimeHours = hoursWorked - regularHoursPerDay;
-          overtimePay = rate * overtimeHours * overtimeMultiplier;
-        } else {
-          // No overtime, all hours are regular
-          regularPay = rate * hoursWorked;
-        }
+        const overtimePay = rate * hoursWorked;
 
         return overtimePay;
       };
 
-      const newOvertime = {
-        id: Math.random(),
+      const overtime = {
+        id: Math.round(Math.random() * 10000),
         rate: rate,
         hour: hour,
-        date: new Date(),
+        date: String(new Date()),
         overtimePay: calculateOvertimePay(rate, hour),
       };
-      db.push(newOvertime);
+
+      const newOvertime = await db
+        .insert(overtimes)
+        .values(overtime)
+        .returning()
+        .get();
       return <OvertimeItem {...newOvertime} />;
     },
     {
@@ -98,19 +83,6 @@ const BaseHtml = ({ children }: elements.Children) => `
   ${children}
 
 `;
-
-type Overtime = {
-  id: number;
-  rate: number;
-  hour: number;
-  date: Date;
-  overtimePay?: number;
-};
-
-const db: Overtime[] = [
-  { id: 1, rate: 16, hour: 3, overtimePay: 10, date: new Date() },
-  { id: 2, rate: 16, hour: 3, overtimePay: 9, date: new Date() },
-];
 
 const OvertimeItem = ({ rate, hour, date, overtimePay }: Overtime) => {
   return (
