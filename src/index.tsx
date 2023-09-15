@@ -28,14 +28,13 @@ const app = new Elysia()
   .get("/overtimes", () => <OvertimeList overtimes={db} />)
   .post(
     "/overtimes",
-    ({ params }) => {
-      const rate = parseFloat(params.rate);
-      const hour = parseFloat(params.hour);
+    ({ body }) => {
+      const rate = parseFloat(body.rate);
+      const hour = parseFloat(body.hour);
 
-      if (params.rate === undefined || params.hour === undefined) {
+      if (rate === undefined || hour === undefined) {
         throw new Error("Rate and hour parameters are required.");
       }
-      console.log(params);
 
       const calculateOvertimePay = (
         rate: number,
@@ -74,7 +73,7 @@ const app = new Elysia()
       return <OvertimeItem {...newOvertime} />;
     },
     {
-      params: t.Object({
+      body: t.Object({
         rate: t.String(),
         hour: t.String(),
       }),
@@ -168,11 +167,13 @@ const OvertimeForm = () => {
         <input
           type="number"
           name="rate"
-          class="peer block min-h-[auto] w-full rounded border-0 bg-transparent px-3 py-[0.32rem] leading-[1.6] outline-none transition-all duration-200 ease-linear focus:placeholder:opacity-100 peer-focus:text-primary data-[te-input-state-active]:placeholder:opacity-100 motion-reduce:transition-none dark:text-neutral-200 dark:placeholder:text-neutral-200 dark:peer-focus:text-primary [&:not([data-te-input-placeholder-active])]:placeholder:opacity-0"
+          class="peer block min-h-[auto] w-full rounded border-0 bg-transparent px-3 py-[0.32rem] leading-[1.6] outline-none transition-all duration-200 ease-linear focus:placeholder:opacity-100 peer-focus:text-primary data-[te-input-state-active]:placeholder:opacity-100 motion-reduce:transition-none  dark:placeholder:text-neutral-200 dark:peer-focus:text-primary [&:not([data-te-input-placeholder-active])]:placeholder:opacity-0"
           placeholder="0"
+          id="rate"
+          data-te-input-state-active
         />
         <label
-          for="exampleFormControlInput1"
+          for="rate"
           class="pointer-events-none absolute left-3 top-0 mb-0 max-w-[90%] origin-[0_0] truncate pt-[0.37rem] leading-[1.6] text-neutral-500 transition-all duration-200 ease-out peer-focus:-translate-y-[0.9rem] peer-focus:scale-[0.8] peer-focus:text-primary peer-data-[te-input-state-active]:-translate-y-[0.9rem] peer-data-[te-input-state-active]:scale-[0.8] motion-reduce:transition-none dark:text-neutral-200 dark:peer-focus:text-primary"
         >
           Overtime Rate
@@ -181,11 +182,13 @@ const OvertimeForm = () => {
           <input
             type="number"
             name="hour"
-            class="peer block min-h-[auto] w-full rounded border-0 bg-transparent px-3 py-[0.32rem] leading-[1.6] outline-none transition-all duration-200 ease-linear focus:placeholder:opacity-100 peer-focus:text-primary data-[te-input-state-active]:placeholder:opacity-100 motion-reduce:transition-none dark:text-neutral-200 dark:placeholder:text-neutral-200 dark:peer-focus:text-primary [&:not([data-te-input-placeholder-active])]:placeholder:opacity-0"
+            class="peer block min-h-[auto] w-full rounded border-0 bg-transparent px-3 py-[0.32rem] leading-[1.6] outline-none transition-all duration-200 ease-linear focus:placeholder:opacity-100 peer-focus:text-primary data-[te-input-state-active]:placeholder:opacity-100 motion-reduce:transition-none dark:placeholder:text-neutral-200 dark:peer-focus:text-primary [&:not([data-te-input-placeholder-active])]:placeholder:opacity-0"
             placeholder="0"
+            id="hour"
+            data-te-input-state-active
           />
           <label
-            for="exampleFormControlInput1"
+            for="hour"
             class="pointer-events-none absolute left-3 top-0 mb-0 max-w-[90%] origin-[0_0] truncate pt-[0.37rem] leading-[1.6] text-neutral-500 transition-all duration-200 ease-out peer-focus:-translate-y-[0.9rem] peer-focus:scale-[0.8] peer-focus:text-primary peer-data-[te-input-state-active]:-translate-y-[0.9rem] peer-data-[te-input-state-active]:scale-[0.8] motion-reduce:transition-none dark:text-neutral-200 dark:peer-focus:text-primary"
           >
             Hours Worked
